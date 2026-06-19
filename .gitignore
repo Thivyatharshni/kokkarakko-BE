@@ -1,0 +1,42 @@
+# Dependencies
+node_modules/
+
+# Environment Variables
+.env
+.env.local
+.env.production
+
+# Logs
+logs/
+*.log
+
+# Uploaded Images
+uploads/menu/*
+uploads/qr/*
+
+# Keep Upload Folders
+!uploads/menu/.gitkeep
+!uploads/qr/.gitkeep
+
+# Build Files
+dist/
+build/
+
+# Coverage
+coverage/
+
+# Cache
+.cache/
+
+# IDE
+.vscode/
+.idea/
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# Temporary Files
+tmp/
+temp/
+*.tmp
