@@ -1,6 +1,6 @@
 import dotenv from 'dotenv';
 
-// 1. Load dotenv config files
+// 1. Load dotenv configs
 dotenv.config();
 
 // Now import everything else that might depend on env vars

@@ -42,6 +42,17 @@ const seedData = async () => {
     console.log('Shop Seeded...');
 
     // 3. Create Menu Items
+    const menuImages = {
+      'Chicken Leg': '/uploads/chicken-leg.png',
+      'Chicken Wings': '/uploads/chicken-wings.jpg',
+      'Chicken Strips': '/uploads/chicken-strips.jpg',
+      'Popcorn Chicken': '/uploads/popcorn-chicken.jpg',
+      'Spicy Chicken Bites': '/uploads/spicy-chicken-bites.jpg',
+      'Chicken Lollipop': '/uploads/chicken-lollipop.jpg',
+      'Hot Wings Combo': '/uploads/hot-wings-combo.svg',
+      'Bucket Meal': '/uploads/bucket-meal.svg'
+    };
+
     const menuItems = [
       { name: 'Chicken Leg', description: 'Crispy fried chicken leg piece.', category: 'Chicken', price: 150, available: true },
       { name: 'Chicken Wings', description: 'Spicy and crispy chicken wings.', category: 'Chicken', price: 200, available: true },
@@ -54,7 +65,7 @@ const seedData = async () => {
     ].map(item => ({
       ...item,
       shopId: createdShop._id,
-      image: '', // image placeholder
+      image: menuImages[item.name] || '',
     }));
 
     await Menu.insertMany(menuItems);

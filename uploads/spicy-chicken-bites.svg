@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200" width="100%" height="100%">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="100%" stop-color="#FFF4E6" />
+    </radialGradient>
+  </defs>
+  <rect width="300" height="200" rx="16" fill="url(#bg)" />
+  <ellipse cx="150" cy="140" rx="90" ry="20" fill="#E5E7EB" />
+  <ellipse cx="150" cy="138" rx="84" ry="16" fill="#F3F4F6" />
+  <!-- Heap of red glazed bites -->
+  <g transform="translate(85, 55)">
+    <!-- Row 1 -->
+    <rect x="20" y="40" width="35" height="35" rx="8" fill="#B91C1C" transform="rotate(15, 37, 57)" />
+    <rect x="50" y="30" width="40" height="40" rx="10" fill="#B91C1C" transform="rotate(-10, 70, 50)" />
+    <rect x="85" y="40" width="35" height="35" rx="8" fill="#B91C1C" transform="rotate(25, 102, 57)" />
+    <!-- Row 2 (Glazed front) -->
+    <rect x="35" y="45" width="38" height="38" rx="10" fill="#DC2626" transform="rotate(-5, 54, 64)" />
+    <rect x="70" y="45" width="36" height="36" rx="9" fill="#DC2626" transform="rotate(12, 88, 63)" />
+    <!-- Shiny glaze highlights -->
+    <ellipse cx="50" cy="55" rx="8" ry="3" fill="#FCA5A5" opacity="0.6" transform="rotate(-5, 50, 55)" />
+    <ellipse cx="85" cy="52" rx="7" ry="2.5" fill="#FCA5A5" opacity="0.6" transform="rotate(12, 85, 52)" />
+    <!-- Green spring onion garnishes -->
+    <ellipse cx="45" cy="45" rx="5" ry="2.5" fill="#10B981" stroke="#047857" stroke-width="1.5" transform="rotate(30, 45, 45)" />
+    <ellipse cx="78" cy="40" rx="5" ry="2.5" fill="#10B981" stroke="#047857" stroke-width="1.5" transform="rotate(-40, 78, 40)" />
+    <ellipse cx="95" cy="60" rx="5" ry="2.5" fill="#10B981" stroke="#047857" stroke-width="1.5" transform="rotate(15, 95, 60)" />
+  </g>
+</svg>

@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200" width="100%" height="100%">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="100%" stop-color="#FFF4E6" />
+    </radialGradient>
+  </defs>
+  <rect width="300" height="200" rx="16" fill="url(#bg)" />
+  <ellipse cx="150" cy="140" rx="90" ry="20" fill="#E5E7EB" />
+  <ellipse cx="150" cy="138" rx="84" ry="16" fill="#F3F4F6" />
+  <!-- Chicken Strips stacked -->
+  <g transform="translate(80, 60)">
+    <!-- Strip 1 (Bottom Left) -->
+    <path d="M10 50 Q 40 25 80 40 Q 110 50 100 70 Q 70 80 30 70 Q 0 65 10 50 Z" fill="#C25E00" rx="10" />
+    <!-- Strip 2 (Bottom Right) -->
+    <path d="M40 60 Q 70 35 110 50 Q 140 60 130 80 Q 100 90 60 80 Q 30 75 40 60 Z" fill="#C25E00" />
+    <!-- Strip 3 (Top Middle - Golden) -->
+    <path d="M25 40 Q 60 15 100 30 Q 130 40 120 60 Q 90 70 50 60 Q 15 55 25 40 Z" fill="#D97706" />
+    <!-- Crispy details -->
+    <circle cx="45" cy="38" r="3" fill="#B45309" />
+    <circle cx="75" cy="32" r="3.5" fill="#B45309" />
+    <circle cx="95" cy="42" r="3.5" fill="#B45309" />
+    <!-- Small Sauce Ramekin -->
+    <g transform="translate(120, 45)">
+      <ellipse cx="20" cy="30" rx="18" ry="8" fill="#9CA3AF" />
+      <ellipse cx="20" cy="28" rx="16" ry="6" fill="#DC2626" /> <!-- Red Ketchup -->
+    </g>
+  </g>
+</svg>

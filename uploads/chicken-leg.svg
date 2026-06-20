@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200" width="100%" height="100%">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="100%" stop-color="#FFF4E6" />
+    </radialGradient>
+  </defs>
+  <rect width="300" height="200" rx="16" fill="url(#bg)" />
+  <!-- Plate -->
+  <ellipse cx="150" cy="140" rx="90" ry="20" fill="#E5E7EB" />
+  <ellipse cx="150" cy="138" rx="84" ry="16" fill="#F3F4F6" />
+  <!-- Crispy Chicken Drumstick -->
+  <g transform="translate(90, 55)">
+    <!-- Bone -->
+    <path d="M120 70 L140 85 C143 87 147 87 149 84 C152 81 151 77 148 75 L128 60" stroke="#F9FAFB" stroke-width="14" stroke-linecap="round" />
+    <!-- Bone knobs -->
+    <circle cx="145" cy="85" r="9" fill="#F9FAFB" />
+    <circle cx="152" cy="78" r="9" fill="#F9FAFB" />
+    <!-- Meat Body -->
+    <path d="M20 50 C20 20 60 15 90 30 C120 45 125 75 100 85 C75 95 20 80 20 50 Z" fill="#D97706" />
+    <!-- Crispy Textures -->
+    <path d="M35 40 C45 35 55 45 65 38 C75 32 85 40 95 35" stroke="#B45309" stroke-width="4" stroke-linecap="round" fill="none" />
+    <path d="M40 60 C50 55 60 65 70 58 C80 52 90 60 100 55" stroke="#B45309" stroke-width="4" stroke-linecap="round" fill="none" />
+  </g>
+</svg>
