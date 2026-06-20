@@ -1,6 +1,6 @@
 import express from 'express';
 import { check } from 'express-validator';
-import { createMenuItem, getMenuByShopId, updateMenuItem, deleteMenuItem } from '../controllers/menuController.js';
+import { createMenuItem, getMenuByShopId, updateMenuItem, deleteMenuItem, getFeaturedMenuBySlug } from '../controllers/menuController.js';
 import { protect } from '../middleware/authMiddleware.js';
 import { validateRequest } from '../middleware/validateMiddleware.js';
 import upload from '../middleware/uploadMiddleware.js';
@@ -19,6 +19,8 @@ router.post(
   validateRequest,
   createMenuItem
 );
+
+router.get('/featured/:slug', getFeaturedMenuBySlug);
 
 router.get('/:slug', getMenuByShopId);
 

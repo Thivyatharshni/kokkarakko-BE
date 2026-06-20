@@ -32,6 +32,10 @@ const menuSchema = new mongoose.Schema(
       enum: ['Available', 'Out Of Stock', 'Hidden'],
       default: 'Available',
     },
+    featured: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,

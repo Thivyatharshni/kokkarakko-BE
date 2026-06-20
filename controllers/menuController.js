@@ -6,7 +6,7 @@ import Shop from '../models/Shop.js';
 // @access  Private/Owner
 export const createMenuItem = async (req, res) => {
   try {
-    const { name, description, category, price, status } = req.body;
+    const { name, description, category, price, status, featured } = req.body;
 
     // Verify owner has a shop
     const shop = await Shop.findOne({ ownerId: req.user._id });
@@ -26,6 +26,7 @@ export const createMenuItem = async (req, res) => {
       category,
       price,
       status,
+      featured: featured !== undefined ? (featured === 'true' || featured === true) : false,
       image: imageUrl,
     });
 
@@ -79,13 +80,14 @@ export const updateMenuItem = async (req, res) => {
       return res.status(401).json({ success: false, message: 'User not authorized to update this item' });
     }
 
-    const { name, description, category, price, status } = req.body;
+    const { name, description, category, price, status, featured } = req.body;
 
     if (name) menuItem.name = name;
     if (description) menuItem.description = description;
     if (category) menuItem.category = category;
     if (price) menuItem.price = price;
     if (status !== undefined) menuItem.status = status;
+    if (featured !== undefined) menuItem.featured = featured === 'true' || featured === true;
 
     if (req.file) {
       menuItem.image = `/uploads/menu/${req.file.filename}`;
@@ -126,6 +128,33 @@ export const deleteMenuItem = async (req, res) => {
       success: true,
       message: 'Menu item removed successfully',
       data: {},
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Get featured menu items for a shop by slug
+// @route   GET /api/menu/featured/:slug
+// @access  Public
+export const getFeaturedMenuBySlug = async (req, res) => {
+  try {
+    const shop = await Shop.findOne({ slug: req.params.slug });
+
+    if (!shop) {
+      return res.status(404).json({ success: false, message: 'Shop not found' });
+    }
+
+    const featuredItems = await Menu.find({
+      shopId: shop._id,
+      featured: true,
+      status: 'Available'
+    }).populate('category').sort({ createdAt: -1 });
+
+    res.json({
+      success: true,
+      message: 'Featured items fetched successfully',
+      data: featuredItems,
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
