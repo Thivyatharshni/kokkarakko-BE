@@ -16,7 +16,8 @@ const menuSchema = new mongoose.Schema(
       type: String,
     },
     category: {
-      type: String,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Category',
       required: [true, 'Please add a category'],
     },
     image: {
@@ -26,9 +27,10 @@ const menuSchema = new mongoose.Schema(
       type: Number,
       required: [true, 'Please add a price'],
     },
-    available: {
-      type: Boolean,
-      default: true,
+    status: {
+      type: String,
+      enum: ['Available', 'Out Of Stock', 'Hidden'],
+      default: 'Available',
     },
   },
   {
