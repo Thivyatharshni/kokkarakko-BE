@@ -54,14 +54,14 @@ const seedData = async () => {
     };
 
     const menuItems = [
-      { name: 'Chicken Leg', description: 'Crispy fried chicken leg piece.', category: 'Chicken', price: 150, available: true },
-      { name: 'Chicken Wings', description: 'Spicy and crispy chicken wings.', category: 'Chicken', price: 200, available: true },
-      { name: 'Chicken Strips', description: 'Boneless chicken strips.', category: 'Snacks', price: 180, available: true },
-      { name: 'Popcorn Chicken', description: 'Bite-sized fried chicken.', category: 'Snacks', price: 160, available: true },
-      { name: 'Spicy Chicken Bites', description: 'Extra spicy chicken bites.', category: 'Snacks', price: 170, available: true },
-      { name: 'Chicken Lollipop', description: 'Juicy chicken lollipops.', category: 'Chicken', price: 220, available: true },
-      { name: 'Hot Wings Combo', description: 'Wings with fries and dip.', category: 'Combos', price: 300, available: true },
-      { name: 'Bucket Meal', description: 'Family bucket of mixed chicken.', category: 'Combos', price: 800, available: true },
+      { name: 'Chicken Leg', description: 'Crispy fried chicken leg piece.', category: 'Chicken', price: 150, available: true, featured: false },
+      { name: 'Chicken Wings', description: 'Spicy and crispy chicken wings.', category: 'Chicken', price: 200, available: true, featured: true },
+      { name: 'Chicken Strips', description: 'Boneless chicken strips.', category: 'Snacks', price: 180, available: true, featured: false },
+      { name: 'Popcorn Chicken', description: 'Bite-sized fried chicken.', category: 'Snacks', price: 160, available: true, featured: false },
+      { name: 'Spicy Chicken Bites', description: 'Extra spicy chicken bites.', category: 'Snacks', price: 170, available: true, featured: false },
+      { name: 'Chicken Lollipop', description: 'Juicy chicken lollipops.', category: 'Chicken', price: 220, available: true, featured: true },
+      { name: 'Hot Wings Combo', description: 'Wings with fries and dip.', category: 'Combos', price: 300, available: true, featured: true },
+      { name: 'Bucket Meal', description: 'Family bucket of mixed chicken.', category: 'Combos', price: 800, available: true, featured: true },
     ].map(item => ({
       ...item,
       shopId: createdShop._id,
