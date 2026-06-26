@@ -127,7 +127,9 @@ export const getShopBySlug = async (req, res) => {
     res.json({
       success: true,
       data: {
+        _id: shop._id,
         shopName: shop.shopName,
+        name: shop.shopName,
         slug: shop.slug,
         qrUrl: shop.qrUrl,
       },
