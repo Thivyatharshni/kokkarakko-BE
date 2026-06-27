@@ -2,7 +2,7 @@ import Category from '../models/Category.js';
 import Shop from '../models/Shop.js';
 import Menu from '../models/Menu.js';
 
-// @desc    Get all categories for a shop by slug
+// @desc    Get categories by shop slug
 // @route   GET /api/categories/:slug
 // @access  Public
 export const getCategoriesBySlug = async (req, res) => {
@@ -12,36 +12,12 @@ export const getCategoriesBySlug = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Shop not found' });
     }
 
-    // Find all categories for this shop
-    let categories = await Category.find({ shopId: shop._id });
+    const categories = await Category.find({ shopId: shop._id });
 
-    // Fallback/Auto-sync: if no categories are stored in DB, look at Menu items and create categories
-    if (categories.length === 0) {
-      const distinctCategories = await Menu.distinct('category', { shopId: shop._id });
-      for (const catName of distinctCategories) {
-        if (catName) {
-          try {
-            await Category.create({
-              shopId: shop._id,
-              name: catName,
-              description: `All items under ${catName}`,
-            });
-          } catch (e) {
-            // Ignore duplicate errors in case of parallel execution/race conditions
-            console.error('Failed to create fallback category:', e.message);
-          }
-        }
-      }
-      categories = await Category.find({ shopId: shop._id });
-    }
-
-    // Populate productCount for each category
+    // Include productCount for category deletion validation
     const categoriesWithCount = await Promise.all(
       categories.map(async (cat) => {
-        const productCount = await Menu.countDocuments({
-          shopId: shop._id,
-          category: { $regex: new RegExp(`^${cat.name}$`, 'i') }, // Case insensitive match
-        });
+        const productCount = await Menu.countDocuments({ shopId: shop._id, category: cat.name });
         return {
           ...cat.toObject(),
           productCount,
@@ -51,7 +27,6 @@ export const getCategoriesBySlug = async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Categories fetched successfully',
       data: categoriesWithCount,
     });
   } catch (error) {
@@ -59,7 +34,7 @@ export const getCategoriesBySlug = async (req, res) => {
   }
 };
 
-// @desc    Create a category
+// @desc    Create category
 // @route   POST /api/categories
 // @access  Private/Owner
 export const createCategory = async (req, res) => {
@@ -73,7 +48,7 @@ export const createCategory = async (req, res) => {
 
     let imageUrl = '';
     if (req.file) {
-      imageUrl = `/uploads/menu/${req.file.filename}`;
+      imageUrl = `/uploads/categories/${req.file.filename}`;
     }
 
     const category = await Category.create({
@@ -85,7 +60,6 @@ export const createCategory = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: 'Category created successfully',
       data: category,
     });
   } catch (error) {
@@ -93,7 +67,7 @@ export const createCategory = async (req, res) => {
   }
 };
 
-// @desc    Update a category
+// @desc    Update category
 // @route   PUT /api/categories/:id
 // @access  Private/Owner
 export const updateCategory = async (req, res) => {
@@ -103,35 +77,23 @@ export const updateCategory = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Category not found' });
     }
 
-    // Verify owner owns the shop that owns this category
     const shop = await Shop.findOne({ ownerId: req.user._id });
     if (!shop || shop._id.toString() !== category.shopId.toString()) {
-      return res.status(401).json({ success: false, message: 'Not authorized to update this category' });
+      return res.status(401).json({ success: false, message: 'Not authorized' });
     }
 
     const { name, description } = req.body;
-    const oldName = category.name;
-
     if (name) category.name = name;
     if (description) category.description = description;
 
     if (req.file) {
-      category.image = `/uploads/menu/${req.file.filename}`;
+      category.image = `/uploads/categories/${req.file.filename}`;
     }
 
     const updatedCategory = await category.save();
 
-    // If category name changed, update the category string on all corresponding Menu items!
-    if (name && name !== oldName) {
-      await Menu.updateMany(
-        { shopId: shop._id, category: oldName },
-        { category: name }
-      );
-    }
-
     res.json({
       success: true,
-      message: 'Category updated successfully',
       data: updatedCategory,
     });
   } catch (error) {
@@ -139,7 +101,7 @@ export const updateCategory = async (req, res) => {
   }
 };
 
-// @desc    Delete a category
+// @desc    Delete category
 // @route   DELETE /api/categories/:id
 // @access  Private/Owner
 export const deleteCategory = async (req, res) => {
@@ -149,31 +111,22 @@ export const deleteCategory = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Category not found' });
     }
 
-    // Verify owner owns the shop
     const shop = await Shop.findOne({ ownerId: req.user._id });
     if (!shop || shop._id.toString() !== category.shopId.toString()) {
-      return res.status(401).json({ success: false, message: 'Not authorized to delete this category' });
+      return res.status(401).json({ success: false, message: 'Not authorized' });
     }
 
-    // Check if there are products under this category
-    const productCount = await Menu.countDocuments({
-      shopId: shop._id,
-      category: category.name,
-    });
-
+    // Verify no menu items are under this category
+    const productCount = await Menu.countDocuments({ shopId: shop._id, category: category.name });
     if (productCount > 0) {
-      return res.status(400).json({
-        success: false,
-        message: `Cannot delete category. There are ${productCount} products under this category.`,
-      });
+      return res.status(400).json({ success: false, message: 'Cannot delete category with products' });
     }
 
     await Category.deleteOne({ _id: req.params.id });
 
     res.json({
       success: true,
-      message: 'Category deleted successfully',
-      data: {},
+      message: 'Category removed successfully',
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

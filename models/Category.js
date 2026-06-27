@@ -16,7 +16,7 @@ const categorySchema = new mongoose.Schema(
       type: String,
     },
     image: {
-      type: String, // path to the uploaded image in /uploads/menu
+      type: String,
     },
   },
   {
@@ -24,7 +24,7 @@ const categorySchema = new mongoose.Schema(
   }
 );
 
-// Prevent duplicate category names for the same shop
+// Ensure Category names are unique per shop
 categorySchema.index({ shopId: 1, name: 1 }, { unique: true });
 
 const Category = mongoose.model('Category', categorySchema);
