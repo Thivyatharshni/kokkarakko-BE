@@ -6,7 +6,7 @@ import Shop from '../models/Shop.js';
 // @access  Private/Owner
 export const createMenuItem = async (req, res) => {
   try {
-    const { name, description, category, price, available } = req.body;
+    const { name, description, category, price, status, featured } = req.body;
 
     // Verify owner has a shop
     const shop = await Shop.findOne({ ownerId: req.user._id });
@@ -25,7 +25,8 @@ export const createMenuItem = async (req, res) => {
       description,
       category,
       price,
-      available,
+      status,
+      featured: featured !== undefined ? (featured === 'true' || featured === true) : false,
       image: imageUrl,
     });
 
@@ -50,7 +51,7 @@ export const getMenuByShopId = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Shop not found' });
     }
 
-    const menuItems = await Menu.find({ shopId: shop._id });
+    const menuItems = await Menu.find({ shopId: shop._id }).populate('category');
 
     res.json({
       success: true,
@@ -79,13 +80,14 @@ export const updateMenuItem = async (req, res) => {
       return res.status(401).json({ success: false, message: 'User not authorized to update this item' });
     }
 
-    const { name, description, category, price, available } = req.body;
+    const { name, description, category, price, status, featured } = req.body;
 
     if (name) menuItem.name = name;
     if (description) menuItem.description = description;
     if (category) menuItem.category = category;
     if (price) menuItem.price = price;
-    if (available !== undefined) menuItem.available = available;
+    if (status !== undefined) menuItem.status = status;
+    if (featured !== undefined) menuItem.featured = featured === 'true' || featured === true;
 
     if (req.file) {
       menuItem.image = `/uploads/menu/${req.file.filename}`;
