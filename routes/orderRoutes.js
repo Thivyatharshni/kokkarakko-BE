@@ -22,8 +22,7 @@ router.post(
 router.get('/live/:shopId', protect, getLiveOrders);
 router.get('/history/:shopId', protect, getHistoryOrders);
 router.get('/shop/:shopId', protect, getShopOrders);
-router.get('/live/:shopId', protect, getLiveOrders);
-router.get('/history/:shopId', protect, getHistoryOrders);
+
 
 router.put(
   '/:id/status',

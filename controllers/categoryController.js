@@ -17,7 +17,7 @@ export const getCategoriesBySlug = async (req, res) => {
     // Include productCount for category deletion validation
     const categoriesWithCount = await Promise.all(
       categories.map(async (cat) => {
-        const productCount = await Menu.countDocuments({ shopId: shop._id, category: cat.name });
+        const productCount = await Menu.countDocuments({ shopId: shop._id, category: cat._id });
         return {
           ...cat.toObject(),
           productCount,
@@ -117,7 +117,7 @@ export const deleteCategory = async (req, res) => {
     }
 
     // Verify no menu items are under this category
-    const productCount = await Menu.countDocuments({ shopId: shop._id, category: category.name });
+    const productCount = await Menu.countDocuments({ shopId: shop._id, category: category._id });
     if (productCount > 0) {
       return res.status(400).json({ success: false, message: 'Cannot delete category with products' });
     }

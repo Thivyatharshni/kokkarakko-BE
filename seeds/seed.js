@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import User from '../models/User.js';
 import Shop from '../models/Shop.js';
+import Category from '../models/Category.js';
 import Menu from '../models/Menu.js';
 import Order from '../models/Order.js';
 import connectDB from '../config/db.js';
@@ -15,6 +16,7 @@ const seedData = async () => {
     // Clear existing data
     await Order.deleteMany();
     await Menu.deleteMany();
+    await Category.deleteMany();
     await Shop.deleteMany();
     await User.deleteMany();
 
@@ -41,7 +43,34 @@ const seedData = async () => {
 
     console.log('Shop Seeded...');
 
-    // 3. Create Menu Items
+    // 3. Create Categories
+    const chickenCategory = await Category.create({
+      shopId: createdShop._id,
+      name: 'Chicken',
+      description: 'All items under Chicken',
+    });
+
+    const combosCategory = await Category.create({
+      shopId: createdShop._id,
+      name: 'Combos',
+      description: 'All items under Combos',
+    });
+
+    const snacksCategory = await Category.create({
+      shopId: createdShop._id,
+      name: 'Snacks',
+      description: 'All items under Snacks',
+    });
+
+    console.log('Categories Seeded...');
+
+    const categoryMap = {
+      'Chicken': chickenCategory._id,
+      'Combos': combosCategory._id,
+      'Snacks': snacksCategory._id,
+    };
+
+    // 4. Create Menu Items
     const menuImages = {
       'Chicken Leg': '/uploads/chicken-leg.png',
       'Chicken Wings': '/uploads/chicken-wings.jpg',
@@ -65,6 +94,7 @@ const seedData = async () => {
     ].map(item => ({
       ...item,
       shopId: createdShop._id,
+      category: categoryMap[item.category],
       image: menuImages[item.name] || '',
     }));
 

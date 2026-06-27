@@ -26,9 +26,6 @@ export const trackQRScan = async (req, res) => {
   }
 };
 
-// @desc    Get QR analytics
-// @route   GET /api/qr/analytics/:shopId
-// @access  Private/Owner
 export const getQRAnalytics = async (req, res) => {
   try {
     const { shopId } = req.params;
@@ -36,11 +33,36 @@ export const getQRAnalytics = async (req, res) => {
     const totalScans = await QRScan.countDocuments({ shopId });
     const lastScan = await QRScan.findOne({ shopId }).sort({ createdAt: -1 });
 
+    const now = new Date();
+    const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+    const dailyScans = await QRScan.countDocuments({ shopId, createdAt: { $gte: oneDayAgo } });
+    const weeklyScans = await QRScan.countDocuments({ shopId, createdAt: { $gte: sevenDaysAgo } });
+
+    // scansPerDay for last 7 days
+    const scansPerDay = [];
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const start = new Date(d);
+      start.setHours(0, 0, 0, 0);
+      const end = new Date(d);
+      end.setHours(23, 59, 59, 999);
+
+      const dayScans = await QRScan.countDocuments({ shopId, createdAt: { $gte: start, $lte: end } });
+      scansPerDay.push({ date: days[d.getDay()], scans: dayScans });
+    }
+
     res.json({
       success: true,
       data: {
         totalScans,
+        dailyScans,
+        weeklyScans,
         lastScannedAt: lastScan ? lastScan.createdAt : null,
+        scansPerDay,
       },
     });
   } catch (error) {
