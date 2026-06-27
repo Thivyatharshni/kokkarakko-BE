@@ -137,7 +137,7 @@ export const deleteMenuItem = async (req, res) => {
 // @desc    Get featured menu items for a shop by slug
 // @route   GET /api/menu/featured/:slug
 // @access  Public
-export const getFeaturedMenuBySlug = async (req, res) => {
+export const getFeaturedMenuByShopSlug = async (req, res) => {
   try {
     const shop = await Shop.findOne({ slug: req.params.slug });
 
@@ -145,15 +145,15 @@ export const getFeaturedMenuBySlug = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Shop not found' });
     }
 
-    const featuredItems = await Menu.find({
-      shopId: shop._id,
-      featured: true,
-      status: 'Available'
-    }).populate('category').sort({ createdAt: -1 });
+    // Query for featured items, or fallback to first 4 items if none exist
+    let featuredItems = await Menu.find({ shopId: shop._id, featured: true });
+    if (featuredItems.length === 0) {
+      featuredItems = await Menu.find({ shopId: shop._id }).limit(4);
+    }
 
     res.json({
       success: true,
-      message: 'Featured items fetched successfully',
+      message: 'Featured menu items fetched successfully',
       data: featuredItems,
     });
   } catch (error) {

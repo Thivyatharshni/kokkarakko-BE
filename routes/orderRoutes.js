@@ -1,6 +1,6 @@
 import express from 'express';
 import { check } from 'express-validator';
-import { createOrder, getLiveOrders, getHistoryOrders, updateOrderStatus } from '../controllers/orderController.js';
+import { createOrder, getShopOrders, updateOrderStatus, getLiveOrders, getHistoryOrders } from '../controllers/orderController.js';
 import { protect } from '../middleware/authMiddleware.js';
 import { validateRequest } from '../middleware/validateMiddleware.js';
 
@@ -19,6 +19,9 @@ router.post(
   createOrder
 );
 
+router.get('/live/:shopId', protect, getLiveOrders);
+router.get('/history/:shopId', protect, getHistoryOrders);
+router.get('/shop/:shopId', protect, getShopOrders);
 router.get('/live/:shopId', protect, getLiveOrders);
 router.get('/history/:shopId', protect, getHistoryOrders);
 

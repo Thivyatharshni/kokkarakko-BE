@@ -131,6 +131,44 @@ export const getHistoryOrders = async (req, res) => {
   }
 };
 
+// @desc    Get live orders
+// @route   GET /api/orders/live/:shopId
+// @access  Private/Owner
+export const getLiveOrders = async (req, res) => {
+  try {
+    const shop = await Shop.findOne({ _id: req.params.shopId, ownerId: req.user._id });
+    if (!shop) return res.status(401).json({ success: false, message: 'Not authorized' });
+
+    const orders = await Order.find({ 
+      shopId: req.params.shopId,
+      status: { $in: ['Pending', 'Preparing', 'Ready'] }
+    }).sort({ createdAt: 1 }); // Oldest first for live orders
+
+    res.json({ success: true, data: orders });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Get history orders
+// @route   GET /api/orders/history/:shopId
+// @access  Private/Owner
+export const getHistoryOrders = async (req, res) => {
+  try {
+    const shop = await Shop.findOne({ _id: req.params.shopId, ownerId: req.user._id });
+    if (!shop) return res.status(401).json({ success: false, message: 'Not authorized' });
+
+    const orders = await Order.find({ 
+      shopId: req.params.shopId,
+      status: 'Completed' 
+    }).sort({ createdAt: -1 }); // Newest first for history
+
+    res.json({ success: true, data: orders });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 // @desc    Update order status
 // @route   PUT /api/orders/:id/status
 // @access  Private/Owner
@@ -160,6 +198,73 @@ export const updateOrderStatus = async (req, res) => {
       success: true,
       message: 'Order status updated successfully',
       data: updatedOrder,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Get live orders for a shop (Pending, Preparing, Ready)
+// @route   GET /api/orders/live/:shopId
+// @access  Private/Owner
+export const getLiveOrders = async (req, res) => {
+  try {
+    const shop = await Shop.findOne({ _id: req.params.shopId, ownerId: req.user._id });
+    
+    if (!shop) {
+      return res.status(401).json({ success: false, message: 'User not authorized to view these orders' });
+    }
+
+    const orders = await Order.find({
+      shopId: req.params.shopId,
+      status: { $in: ['Pending', 'Preparing', 'Ready'] }
+    }).sort({ createdAt: -1 });
+
+    res.json({
+      success: true,
+      message: 'Live orders fetched successfully',
+      data: orders,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Get order history for a shop (Completed)
+// @route   GET /api/orders/history/:shopId
+// @access  Private/Owner
+export const getHistoryOrders = async (req, res) => {
+  try {
+    const shop = await Shop.findOne({ _id: req.params.shopId, ownerId: req.user._id });
+    
+    if (!shop) {
+      return res.status(401).json({ success: false, message: 'User not authorized to view these orders' });
+    }
+
+    const { fromDate, toDate } = req.query;
+    const query = {
+      shopId: req.params.shopId,
+      status: 'Completed'
+    };
+
+    if (fromDate || toDate) {
+      query.createdAt = {};
+      if (fromDate) {
+        query.createdAt.$gte = new Date(fromDate);
+      }
+      if (toDate) {
+        const end = new Date(toDate);
+        end.setHours(23, 59, 59, 999);
+        query.createdAt.$lte = end;
+      }
+    }
+
+    const orders = await Order.find(query).sort({ createdAt: -1 });
+
+    res.json({
+      success: true,
+      message: 'Order history fetched successfully',
+      data: orders,
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

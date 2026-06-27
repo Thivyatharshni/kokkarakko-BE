@@ -16,13 +16,16 @@ const categorySchema = new mongoose.Schema(
       type: String,
     },
     image: {
-      type: String, // path to the uploaded image in /uploads/category
+      type: String,
     },
   },
   {
     timestamps: true,
   }
 );
+
+// Ensure Category names are unique per shop
+categorySchema.index({ shopId: 1, name: 1 }, { unique: true });
 
 const Category = mongoose.model('Category', categorySchema);
 export default Category;

@@ -4,10 +4,7 @@ import { protect } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-router.route('/scan')
-  .post(trackQRScan);
-
-router.route('/analytics/:shopId')
-  .get(protect, getQRAnalytics);
+router.post('/scan', trackQRScan);
+router.get('/analytics/:shopId', protect, getQRAnalytics);
 
 export default router;

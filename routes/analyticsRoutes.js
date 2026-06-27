@@ -1,13 +1,9 @@
 import express from 'express';
-import { getShopAnalytics, getDashboardAnalytics } from '../controllers/analyticsController.js';
-import { protect } from '../middleware/authMiddleware.js';
+import { getDashboardAnalytics, getShopAnalytics } from '../controllers/analyticsController.js';
 
 const router = express.Router();
 
-router.route('/dashboard/:shopId')
-  .get(protect, getDashboardAnalytics);
-
-router.route('/:slug')
-  .get(protect, getShopAnalytics);
+router.get('/dashboard/:shopId', getDashboardAnalytics);
+router.get('/:slug', getShopAnalytics);
 
 export default router;

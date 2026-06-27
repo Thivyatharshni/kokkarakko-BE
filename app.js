@@ -8,8 +8,8 @@ import authRoutes from './routes/authRoutes.js';
 import shopRoutes from './routes/shopRoutes.js';
 import menuRoutes from './routes/menuRoutes.js';
 import orderRoutes from './routes/orderRoutes.js';
-import categoryRoutes from './routes/categoryRoutes.js';
 import analyticsRoutes from './routes/analyticsRoutes.js';
+import categoryRoutes from './routes/categoryRoutes.js';
 import qrRoutes from './routes/qrRoutes.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -18,7 +18,12 @@ const __dirname = path.dirname(__filename);
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(
+  cors({
+    origin: true,
+    credentials: true,
+  })
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -37,6 +42,8 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/menu', menuRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/analytics', analyticsRoutes);
+app.use('/api/categories', categoryRoutes);
 app.use('/api/qr', qrRoutes);
 
 // Error Handling Middleware
