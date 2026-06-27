@@ -1,6 +1,7 @@
 import Category from '../models/Category.js';
 import Shop from '../models/Shop.js';
 import Menu from '../models/Menu.js';
+import { uploadToCloudinary, deleteFromCloudinary } from '../utils/cloudinaryHelper.js';
 
 // @desc    Get categories by shop slug
 // @route   GET /api/categories/:slug
@@ -47,8 +48,11 @@ export const createCategory = async (req, res) => {
     }
 
     let imageUrl = '';
+    let cloudinaryPublicId = '';
     if (req.file) {
-      imageUrl = `/uploads/categories/${req.file.filename}`;
+      const result = await uploadToCloudinary(req.file.buffer, 'categories');
+      imageUrl = result.secure_url;
+      cloudinaryPublicId = result.public_id;
     }
 
     const category = await Category.create({
@@ -56,6 +60,7 @@ export const createCategory = async (req, res) => {
       name,
       description,
       image: imageUrl,
+      cloudinaryPublicId,
     });
 
     res.status(201).json({
@@ -87,7 +92,12 @@ export const updateCategory = async (req, res) => {
     if (description) category.description = description;
 
     if (req.file) {
-      category.image = `/uploads/categories/${req.file.filename}`;
+      if (category.cloudinaryPublicId) {
+        await deleteFromCloudinary(category.cloudinaryPublicId);
+      }
+      const result = await uploadToCloudinary(req.file.buffer, 'categories');
+      category.image = result.secure_url;
+      category.cloudinaryPublicId = result.public_id;
     }
 
     const updatedCategory = await category.save();
@@ -120,6 +130,10 @@ export const deleteCategory = async (req, res) => {
     const productCount = await Menu.countDocuments({ shopId: shop._id, category: category._id });
     if (productCount > 0) {
       return res.status(400).json({ success: false, message: 'Cannot delete category with products' });
+    }
+
+    if (category.cloudinaryPublicId) {
+      await deleteFromCloudinary(category.cloudinaryPublicId);
     }
 
     await Category.deleteOne({ _id: req.params.id });

@@ -18,6 +18,9 @@ const categorySchema = new mongoose.Schema(
     image: {
       type: String,
     },
+    cloudinaryPublicId: {
+      type: String,
+    },
   },
   {
     timestamps: true,

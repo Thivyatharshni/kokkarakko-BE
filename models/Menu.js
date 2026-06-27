@@ -21,7 +21,10 @@ const menuSchema = new mongoose.Schema(
       required: [true, 'Please add a category'],
     },
     image: {
-      type: String, // path to the uploaded image in /uploads/menu
+      type: String, // path to the uploaded image
+    },
+    cloudinaryPublicId: {
+      type: String,
     },
     price: {
       type: Number,

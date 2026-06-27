@@ -1,5 +1,6 @@
 import Menu from '../models/Menu.js';
 import Shop from '../models/Shop.js';
+import { uploadToCloudinary, deleteFromCloudinary } from '../utils/cloudinaryHelper.js';
 
 // @desc    Create a new menu item
 // @route   POST /api/menu
@@ -15,8 +16,11 @@ export const createMenuItem = async (req, res) => {
     }
 
     let imageUrl = '';
+    let cloudinaryPublicId = '';
     if (req.file) {
-      imageUrl = `/uploads/menu/${req.file.filename}`;
+      const result = await uploadToCloudinary(req.file.buffer, 'menu');
+      imageUrl = result.secure_url;
+      cloudinaryPublicId = result.public_id;
     }
 
     const menuItem = await Menu.create({
@@ -28,6 +32,7 @@ export const createMenuItem = async (req, res) => {
       status,
       featured: featured !== undefined ? (featured === 'true' || featured === true) : false,
       image: imageUrl,
+      cloudinaryPublicId,
     });
 
     res.status(201).json({
@@ -90,7 +95,12 @@ export const updateMenuItem = async (req, res) => {
     if (featured !== undefined) menuItem.featured = featured === 'true' || featured === true;
 
     if (req.file) {
-      menuItem.image = `/uploads/menu/${req.file.filename}`;
+      if (menuItem.cloudinaryPublicId) {
+        await deleteFromCloudinary(menuItem.cloudinaryPublicId);
+      }
+      const result = await uploadToCloudinary(req.file.buffer, 'menu');
+      menuItem.image = result.secure_url;
+      menuItem.cloudinaryPublicId = result.public_id;
     }
 
     const updatedMenuItem = await menuItem.save();
@@ -120,6 +130,10 @@ export const deleteMenuItem = async (req, res) => {
     const shop = await Shop.findOne({ ownerId: req.user._id });
     if (!shop || shop._id.toString() !== menuItem.shopId.toString()) {
       return res.status(401).json({ success: false, message: 'User not authorized to delete this item' });
+    }
+
+    if (menuItem.cloudinaryPublicId) {
+      await deleteFromCloudinary(menuItem.cloudinaryPublicId);
     }
 
     await Menu.deleteOne({ _id: req.params.id });
