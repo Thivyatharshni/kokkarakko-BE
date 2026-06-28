@@ -42,8 +42,6 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/menu', menuRoutes);
 app.use('/api/orders', orderRoutes);
-app.use('/api/analytics', analyticsRoutes);
-app.use('/api/categories', categoryRoutes);
 app.use('/api/qr', qrRoutes);
 
 // Error Handling Middleware

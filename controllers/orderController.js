@@ -1,6 +1,7 @@
 import Order from '../models/Order.js';
 import Shop from '../models/Shop.js';
 import { getIo } from '../sockets/index.js';
+import { getISTDateRange } from '../utils/timezoneHelper.js';
 
 // Generate Order Number Utility (e.g., KKR-1001)
 const generateOrderNumber = async (shopId) => {
@@ -57,9 +58,12 @@ export const getLiveOrders = async (req, res) => {
       return res.status(401).json({ success: false, message: 'User not authorized to view these orders' });
     }
 
+    const { start: startOfToday, end: endOfToday } = getISTDateRange();
+
     const orders = await Order.find({
       shopId: req.params.shopId,
-      status: { $in: ['Pending', 'Preparing', 'Ready'] }
+      status: { $in: ['Pending', 'Preparing', 'Ready'] },
+      createdAt: { $gte: startOfToday, $lte: endOfToday }
     }).sort({ createdAt: -1 });
 
     res.json({
@@ -92,11 +96,11 @@ export const getHistoryOrders = async (req, res) => {
     if (fromDate || toDate) {
       query.createdAt = {};
       if (fromDate) {
-        query.createdAt.$gte = new Date(fromDate);
+        const { start } = getISTDateRange(fromDate);
+        query.createdAt.$gte = start;
       }
       if (toDate) {
-        const end = new Date(toDate);
-        end.setHours(23, 59, 59, 999);
+        const { end } = getISTDateRange(toDate);
         query.createdAt.$lte = end;
       }
     }

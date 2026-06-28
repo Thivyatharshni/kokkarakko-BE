@@ -85,17 +85,6 @@ export const updateShop = async (req, res) => {
 
     if (shopName) {
       shop.shopName = shopName;
-      const newSlug = slugify(shopName, { lower: true, strict: true });
-      
-      // If slug changed, ensure it's unique
-      if (newSlug !== shop.slug) {
-        const slugExists = await Shop.findOne({ slug: newSlug });
-        if (slugExists) {
-          return res.status(400).json({ success: false, message: 'Shop name already taken' });
-        }
-        shop.slug = newSlug;
-        shop.qrUrl = `/menu/${newSlug}`;
-      }
     }
 
     if (address) shop.address = address;
