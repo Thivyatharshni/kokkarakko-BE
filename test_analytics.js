@@ -1,8 +1,18 @@
 import http from 'http';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+const host = process.env.TEST_HOST;
+const port = process.env.PORT;
+
+if (!host || !port) {
+  throw new Error('TEST_HOST and PORT environment variables are required to run this test script.');
+}
 
 const options = {
-  hostname: 'localhost',
-  port: 5001,
+  hostname: host,
+  port: parseInt(port),
   path: '/api/analytics/dashboard/6a3f76c2c57d0b4a8cff15d2',
   method: 'GET'
 };

@@ -1,15 +1,11 @@
-import dotenv from 'dotenv';
-
-// 1. Load dotenv configs
-dotenv.config();
-
-// Now import everything else that might depend on env vars
+import './config/env.js';
 import http from 'http';
 import app from './app.js';
 import connectDB from './config/db.js';
 import { initSocket } from './sockets/index.js';
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT;
+
 
 const startServer = async () => {
   // 2. Connect MongoDB

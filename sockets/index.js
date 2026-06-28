@@ -2,11 +2,25 @@ import { Server } from 'socket.io';
 
 let io;
 
+const allowedOrigins = [];
+if (process.env.CLIENT_URL) {
+  allowedOrigins.push(process.env.CLIENT_URL);
+}
+allowedOrigins.push('http://localhost:5173', 'http://127.0.0.1:5173');
+
 export const initSocket = (server) => {
   io = new Server(server, {
     cors: {
       origin: (origin, callback) => {
-        callback(null, true);
+        if (!origin) return callback(null, true);
+        const isAllowed = allowedOrigins.some(allowed => {
+          return origin === allowed || allowed.replace(/\/$/, '') === origin.replace(/\/$/, '');
+        });
+        if (isAllowed) {
+          callback(null, true);
+        } else {
+          callback(new Error('Not allowed by CORS'));
+        }
       },
       methods: ['GET', 'POST'],
       credentials: true,
