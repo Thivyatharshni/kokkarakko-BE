@@ -94,54 +94,71 @@ export const getDashboardAnalytics = async (req, res) => {
   try {
     const { shopId } = req.params;
 
-    // Total Products
-    const totalProducts = await Menu.countDocuments({ shopId });
-
-    // Total Categories
-    const totalCategories = await Category.countDocuments({ shopId });
+    // Concurrently fetch counts and ranges to optimize performance
+    const totalProductsPromise = Menu.countDocuments({ shopId });
+    const totalCategoriesPromise = Category.countDocuments({ shopId });
 
     // Today's Orders & Revenue in IST
     const { start: startOfToday, end: endOfToday } = getISTDateRange();
-
-    const todayOrdersQuery = await Order.find({
+    const todayOrdersQueryPromise = Order.find({
       shopId,
       createdAt: { $gte: startOfToday, $lte: endOfToday },
     });
 
-    const todayOrders = todayOrdersQuery.length;
-    
-    // Revenue Today (Only completed orders!)
-    const completedTodayOrders = todayOrdersQuery.filter(order => order.status === 'Completed');
-    const todayRevenue = completedTodayOrders.reduce((sum, order) => sum + order.totalAmount, 0);
-
-    // Pending Orders
-    const pendingOrders = await Order.countDocuments({ shopId, status: 'Pending' });
-
-    // Latest Order
-    const latestOrder = await Order.findOne({ shopId }).sort({ createdAt: -1 }).select('orderNumber');
+    const pendingOrdersPromise = Order.countDocuments({ shopId, status: 'Pending' });
+    const latestOrderPromise = Order.findOne({ shopId }).sort({ createdAt: -1 }).select('orderNumber');
 
     // Most Viewed Product from actual ProductView collection
-    const mostViewedQuery = await ProductView.aggregate([
+    const mostViewedQueryPromise = ProductView.aggregate([
       { $match: { shopId: new mongoose.Types.ObjectId(shopId) } },
       { $group: { _id: '$productId', count: { $sum: 1 } } },
       { $sort: { count: -1 } },
       { $limit: 1 }
     ]);
 
+    // Weekly Orders & Revenue Chart Data in IST (single batch query)
+    const startOfWeeklyRange = new Date();
+    startOfWeeklyRange.setDate(startOfWeeklyRange.getDate() - 6);
+    const { start: weeklyStart } = getISTDateRange(startOfWeeklyRange);
+    const { end: weeklyEnd } = getISTDateRange(new Date());
+
+    const weeklyOrdersPromise = Order.find({
+      shopId,
+      createdAt: { $gte: weeklyStart, $lte: weeklyEnd }
+    });
+
+    const [
+      totalProducts,
+      totalCategories,
+      todayOrdersQuery,
+      pendingOrders,
+      latestOrder,
+      mostViewedQuery,
+      allWeeklyOrders
+    ] = await Promise.all([
+      totalProductsPromise,
+      totalCategoriesPromise,
+      todayOrdersQueryPromise,
+      pendingOrdersPromise,
+      latestOrderPromise,
+      mostViewedQueryPromise,
+      weeklyOrdersPromise
+    ]);
+
+    const todayOrders = todayOrdersQuery.length;
+    const completedTodayOrders = todayOrdersQuery.filter(order => order.status === 'Completed');
+    const todayRevenue = completedTodayOrders.reduce((sum, order) => sum + order.totalAmount, 0);
+
     let mostViewedProduct = 'N/A';
+    let topCategory = 'N/A';
+
     if (mostViewedQuery.length > 0) {
-      const topProd = await Menu.findById(mostViewedQuery[0]._id);
+      const topProd = await Menu.findById(mostViewedQuery[0]._id).populate('category');
       if (topProd) {
         mostViewedProduct = topProd.name;
-      }
-    }
-
-    // Top Category from views
-    let topCategory = 'N/A';
-    if (mostViewedProduct !== 'N/A') {
-      const popularProduct = await Menu.findOne({ name: mostViewedProduct, shopId }).populate('category');
-      if (popularProduct && popularProduct.category) {
-        topCategory = popularProduct.category.name;
+        if (topProd.category) {
+          topCategory = topProd.category.name;
+        }
       }
     }
 
@@ -152,7 +169,6 @@ export const getDashboardAnalytics = async (req, res) => {
       }
     }
 
-    // Weekly Orders & Revenue Chart Data in IST
     const weeklyOrdersChart = [];
     const weeklyRevenueChart = [];
     const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -168,14 +184,12 @@ export const getDashboardAnalytics = async (req, res) => {
       const istDate = new Date(utcTime + (330 * 60000));
       const dayName = days[istDate.getDay()];
 
-      const dayOrders = await Order.find({
-        shopId,
-        createdAt: { $gte: start, $lte: end }
+      const dayOrders = allWeeklyOrders.filter(order => {
+        const orderTime = new Date(order.createdAt).getTime();
+        return orderTime >= start.getTime() && orderTime <= end.getTime();
       });
 
       const orderCount = dayOrders.length;
-      
-      // Weekly Revenue (Only Completed orders!)
       const completedDayOrders = dayOrders.filter(o => o.status === 'Completed');
       const revenue = completedDayOrders.reduce((sum, o) => sum + o.totalAmount, 0);
 
@@ -214,18 +228,18 @@ export const getShopAnalytics = async (req, res) => {
     }
     const shopId = shop._id;
 
-    // 1. Calculate scan metrics from QRScan collection with IST boundaries
-    const totalScans = await QRScan.countDocuments({ shopId });
-    
+    // Concurrently trigger setup counts and queries to optimize speed
+    const totalScansPromise = QRScan.countDocuments({ shopId });
+
     // Daily scans (Today in IST)
     const { start: dailyStart } = getISTDateRange();
-    const dailyScans = await QRScan.countDocuments({ shopId, createdAt: { $gte: dailyStart } });
+    const dailyScansPromise = QRScan.countDocuments({ shopId, createdAt: { $gte: dailyStart } });
 
     // Weekly scans (Last 7 days in IST)
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
     const { start: weeklyStart } = getISTDateRange(sevenDaysAgo);
-    const weeklyScans = await QRScan.countDocuments({ shopId, createdAt: { $gte: weeklyStart } });
+    const weeklyScansPromise = QRScan.countDocuments({ shopId, createdAt: { $gte: weeklyStart } });
 
     // Monthly scans (Current calendar month in IST)
     const now = new Date();
@@ -233,21 +247,61 @@ export const getShopAnalytics = async (req, res) => {
     const istNow = new Date(utcTime + (330 * 60000));
     const startOfMonth = new Date(istNow.getFullYear(), istNow.getMonth(), 1, 0, 0, 0, 0);
     const monthlyStart = new Date(startOfMonth.getTime() - (330 * 60000));
-    const monthlyScans = await QRScan.countDocuments({ shopId, createdAt: { $gte: monthlyStart } });
+    const monthlyScansPromise = QRScan.countDocuments({ shopId, createdAt: { $gte: monthlyStart } });
 
-    // 2. Traffic trend by hour (scans grouped by hour slots today in IST)
+    // Traffic trend: Fetch all today's scans in a single query
+    const todayScansPromise = QRScan.find({ shopId, createdAt: { $gte: dailyStart } }).select('createdAt');
+
+    // Completed orders for products & categories metrics
+    const allCompletedOrdersPromise = Order.find({ shopId, status: 'Completed' });
+
+    // Most viewed views
+    const mostViewedQueryPromise = ProductView.aggregate([
+      { $match: { shopId: new mongoose.Types.ObjectId(shopId) } },
+      { $group: { _id: '$productId', count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+      { $limit: 10 }
+    ]);
+
+    // Menu category maps for in-memory resolution (prevents N+1 query loops)
+    const allProductsPromise = Menu.find({ shopId }).populate('category').select('name category');
+
+    const [
+      totalScans,
+      dailyScans,
+      weeklyScans,
+      monthlyScans,
+      todayScans,
+      allCompletedOrders,
+      mostViewedQuery,
+      allProducts
+    ] = await Promise.all([
+      totalScansPromise,
+      dailyScansPromise,
+      weeklyScansPromise,
+      monthlyScansPromise,
+      todayScansPromise,
+      allCompletedOrdersPromise,
+      mostViewedQueryPromise,
+      allProductsPromise
+    ]);
+
+    // 2. Traffic trend in memory
     const trafficTrend = [];
     for (let hour = 8; hour <= 22; hour += 2) {
       const start = new Date(dailyStart.getTime() + (hour * 60 * 60 * 1000));
       const end = new Date(dailyStart.getTime() + ((hour + 2) * 60 * 60 * 1000) - 1);
 
-      const count = await QRScan.countDocuments({ shopId, createdAt: { $gte: start, $lte: end } });
+      const count = todayScans.filter(scan => {
+        const scanTime = new Date(scan.createdAt).getTime();
+        return scanTime >= start.getTime() && scanTime <= end.getTime();
+      }).length;
+
       const timeStr = `${String(hour).padStart(2, '0')}:00`;
       trafficTrend.push({ time: timeStr, traffic: count });
     }
 
-    // 3. Most ordered products (Only Completed orders!)
-    const allCompletedOrders = await Order.find({ shopId, status: 'Completed' });
+    // 3. Most ordered products in memory
     const itemCounts = {};
     allCompletedOrders.forEach(order => {
       order.items.forEach(item => {
@@ -260,23 +314,12 @@ export const getShopAnalytics = async (req, res) => {
       .sort((a, b) => b.orders - a.orders)
       .slice(0, 10);
 
-    // 4. Most viewed from actual ProductView collection
-    const mostViewedQuery = await ProductView.aggregate([
-      { $match: { shopId: new mongoose.Types.ObjectId(shopId) } },
-      { $group: { _id: '$productId', count: { $sum: 1 } } },
-      { $sort: { count: -1 } },
-      { $limit: 10 }
-    ]);
-
-    const mostViewed = await Promise.all(
-      mostViewedQuery.map(async (item) => {
-        const prod = await Menu.findById(item._id);
-        return {
-          name: prod ? prod.name : 'Unknown Product',
-          views: item.count
-        };
-      })
-    );
+    // 4. Most viewed products using in-memory product mapping (1 query instead of 10)
+    const productMap = new Map(allProducts.map(p => [p._id.toString(), p.name]));
+    const mostViewed = mostViewedQuery.map(item => ({
+      name: productMap.get(item._id.toString()) || 'Unknown Product',
+      views: item.count
+    }));
 
     // 5. Peak traffic hour
     let peakHour = '20:00 (8 PM)';
@@ -288,16 +331,20 @@ export const getShopAnalytics = async (req, res) => {
       }
     });
 
-    // 6. Category Performance (Only Completed orders!)
+    // 6. Category Performance using in-memory category mapping (prevents hundreds of queries)
+    const productCategoryMap = new Map(
+      allProducts.map(p => [p.name, p.category ? p.category.name : null])
+    );
+
     const categoryPerformanceMap = {};
-    for (const order of allCompletedOrders) {
-      for (const item of order.items) {
-        const product = await Menu.findOne({ name: item.name, shopId }).populate('category');
-        if (product && product.category) {
-          categoryPerformanceMap[product.category.name] = (categoryPerformanceMap[product.category.name] || 0) + item.quantity;
+    allCompletedOrders.forEach(order => {
+      order.items.forEach(item => {
+        const catName = productCategoryMap.get(item.name);
+        if (catName) {
+          categoryPerformanceMap[catName] = (categoryPerformanceMap[catName] || 0) + item.quantity;
         }
-      }
-    }
+      });
+    });
 
     const categoryPerformance = Object.entries(categoryPerformanceMap).map(([name, value]) => ({
       name,
@@ -311,7 +358,7 @@ export const getShopAnalytics = async (req, res) => {
       });
     }
 
-    // 7. Scan Source Analytics (Aggregate and return source categories, or [] if empty)
+    // 7. Scan Source Analytics
     const scanSourcesQuery = await QRScan.aggregate([
       { $match: { shopId } },
       { $group: { _id: '$source', count: { $sum: 1 } } }
