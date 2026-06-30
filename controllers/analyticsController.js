@@ -95,7 +95,7 @@ export const getDashboardAnalytics = async (req, res) => {
     const { shopId } = req.params;
 
     // Concurrently fetch counts and ranges to optimize performance
-    const totalProductsPromise = Menu.countDocuments({ shopId });
+    const allMenuPromise = Menu.find({ shopId });
     const totalCategoriesPromise = Category.countDocuments({ shopId });
 
     // Today's Orders & Revenue in IST
@@ -128,7 +128,7 @@ export const getDashboardAnalytics = async (req, res) => {
     });
 
     const [
-      totalProducts,
+      allMenu,
       totalCategories,
       todayOrdersQuery,
       pendingOrders,
@@ -136,7 +136,7 @@ export const getDashboardAnalytics = async (req, res) => {
       mostViewedQuery,
       allWeeklyOrders
     ] = await Promise.all([
-      totalProductsPromise,
+      allMenuPromise,
       totalCategoriesPromise,
       todayOrdersQueryPromise,
       pendingOrdersPromise,
@@ -144,6 +144,11 @@ export const getDashboardAnalytics = async (req, res) => {
       mostViewedQueryPromise,
       weeklyOrdersPromise
     ]);
+
+    const totalProducts = allMenu.length;
+    const totalStockUnits = allMenu.reduce((sum, item) => sum + (item.quantity || 0), 0);
+    const lowStockItems = allMenu.filter(item => (item.quantity || 0) >= 1 && (item.quantity || 0) <= 5).length;
+    const outOfStockItems = allMenu.filter(item => (item.quantity || 0) === 0).length;
 
     const todayOrders = todayOrdersQuery.length;
     const completedTodayOrders = todayOrdersQuery.filter(order => order.status === 'Completed');
@@ -209,7 +214,10 @@ export const getDashboardAnalytics = async (req, res) => {
         mostViewedProduct,
         topCategory,
         weeklyOrdersChart,
-        weeklyRevenueChart
+        weeklyRevenueChart,
+        totalStockUnits,
+        lowStockItems,
+        outOfStockItems
       },
     });
   } catch (error) {

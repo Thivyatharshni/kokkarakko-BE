@@ -83,14 +83,14 @@ const seedData = async () => {
     };
 
     const menuItems = [
-      { name: 'Chicken Leg', description: 'Crispy fried chicken leg piece.', category: 'Chicken', price: 150, available: true, featured: false },
-      { name: 'Chicken Wings', description: 'Spicy and crispy chicken wings.', category: 'Chicken', price: 200, available: true, featured: true },
-      { name: 'Chicken Strips', description: 'Boneless chicken strips.', category: 'Snacks', price: 180, available: true, featured: false },
-      { name: 'Popcorn Chicken', description: 'Bite-sized fried chicken.', category: 'Snacks', price: 160, available: true, featured: false },
-      { name: 'Spicy Chicken Bites', description: 'Extra spicy chicken bites.', category: 'Snacks', price: 170, available: true, featured: false },
-      { name: 'Chicken Lollipop', description: 'Juicy chicken lollipops.', category: 'Chicken', price: 220, available: true, featured: true },
-      { name: 'Hot Wings Combo', description: 'Wings with fries and dip.', category: 'Combos', price: 300, available: true, featured: true },
-      { name: 'Bucket Meal', description: 'Family bucket of mixed chicken.', category: 'Combos', price: 800, available: true, featured: true },
+      { name: 'Chicken Leg', description: 'Crispy fried chicken leg piece.', category: 'Chicken', price: 150, available: true, featured: false, quantity: 25, status: 'Available' },
+      { name: 'Chicken Wings', description: 'Spicy and crispy chicken wings.', category: 'Chicken', price: 200, available: true, featured: true, quantity: 8, status: 'Available' },
+      { name: 'Chicken Strips', description: 'Boneless chicken strips.', category: 'Snacks', price: 180, available: true, featured: false, quantity: 12, status: 'Available' },
+      { name: 'Popcorn Chicken', description: 'Bite-sized fried chicken.', category: 'Snacks', price: 160, available: true, featured: false, quantity: 0, status: 'Out Of Stock' },
+      { name: 'Spicy Chicken Bites', description: 'Extra spicy chicken bites.', category: 'Snacks', price: 170, available: true, featured: false, quantity: 15, status: 'Available' },
+      { name: 'Chicken Lollipop', description: 'Juicy chicken lollipops.', category: 'Chicken', price: 220, available: true, featured: true, quantity: 5, status: 'Available' },
+      { name: 'Hot Wings Combo', description: 'Wings with fries and dip.', category: 'Combos', price: 300, available: true, featured: true, quantity: 10, status: 'Available' },
+      { name: 'Bucket Meal', description: 'Family bucket of mixed chicken.', category: 'Combos', price: 800, available: true, featured: true, quantity: 20, status: 'Available' },
     ].map(item => ({
       ...item,
       shopId: createdShop._id,

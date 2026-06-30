@@ -30,6 +30,16 @@ const menuSchema = new mongoose.Schema(
       type: Number,
       required: [true, 'Please add a price'],
     },
+    quantity: {
+      type: Number,
+      required: [true, 'Please add a quantity'],
+      min: [0, 'Quantity cannot be negative'],
+      default: 0,
+      validate: {
+        validator: Number.isInteger,
+        message: '{VALUE} is not an integer value'
+      }
+    },
     status: {
       type: String,
       enum: ['Available', 'Out Of Stock', 'Hidden'],

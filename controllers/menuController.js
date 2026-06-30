@@ -7,12 +7,26 @@ import { uploadToCloudinary, deleteFromCloudinary } from '../utils/cloudinaryHel
 // @access  Private/Owner
 export const createMenuItem = async (req, res) => {
   try {
-    const { name, description, category, price, status, featured } = req.body;
+    const { name, description, category, price, status, featured, quantity } = req.body;
 
     // Verify owner has a shop
     const shop = await Shop.findOne({ ownerId: req.user._id });
     if (!shop) {
       return res.status(404).json({ success: false, message: 'Shop not found for this user' });
+    }
+
+    // Validate quantity
+    const qty = quantity !== undefined ? Number(quantity) : 0;
+    if (isNaN(qty) || !Number.isInteger(qty) || qty < 0) {
+      return res.status(400).json({ success: false, message: 'Quantity must be a non-negative whole number' });
+    }
+
+    // Automatically sync status based on quantity
+    let finalStatus = status || 'Available';
+    if (qty === 0) {
+      finalStatus = 'Out Of Stock';
+    } else if (qty > 0 && finalStatus === 'Out Of Stock') {
+      finalStatus = 'Available';
     }
 
     let imageUrl = '';
@@ -29,7 +43,8 @@ export const createMenuItem = async (req, res) => {
       description,
       category,
       price,
-      status,
+      status: finalStatus,
+      quantity: qty,
       featured: featured !== undefined ? (featured === 'true' || featured === true) : false,
       image: imageUrl,
       cloudinaryPublicId,
@@ -85,7 +100,7 @@ export const updateMenuItem = async (req, res) => {
       return res.status(401).json({ success: false, message: 'User not authorized to update this item' });
     }
 
-    const { name, description, category, price, status, featured } = req.body;
+    const { name, description, category, price, status, featured, quantity } = req.body;
 
     if (name) menuItem.name = name;
     if (description) menuItem.description = description;
@@ -93,6 +108,19 @@ export const updateMenuItem = async (req, res) => {
     if (price) menuItem.price = price;
     if (status !== undefined) menuItem.status = status;
     if (featured !== undefined) menuItem.featured = featured === 'true' || featured === true;
+
+    if (quantity !== undefined) {
+      const qty = Number(quantity);
+      if (isNaN(qty) || !Number.isInteger(qty) || qty < 0) {
+        return res.status(400).json({ success: false, message: 'Quantity must be a non-negative whole number' });
+      }
+      menuItem.quantity = qty;
+      if (qty === 0) {
+        menuItem.status = 'Out Of Stock';
+      } else if (qty > 0 && menuItem.status === 'Out Of Stock') {
+        menuItem.status = 'Available';
+      }
+    }
 
     if (req.file) {
       if (menuItem.cloudinaryPublicId) {
@@ -160,9 +188,9 @@ export const getFeaturedMenuByShopSlug = async (req, res) => {
     }
 
     // Query for featured items, or fallback to first 4 items if none exist
-    let featuredItems = await Menu.find({ shopId: shop._id, featured: true });
+    let featuredItems = await Menu.find({ shopId: shop._id, featured: true }).populate('category');
     if (featuredItems.length === 0) {
-      featuredItems = await Menu.find({ shopId: shop._id }).limit(4);
+      featuredItems = await Menu.find({ shopId: shop._id }).limit(4).populate('category');
     }
 
     res.json({

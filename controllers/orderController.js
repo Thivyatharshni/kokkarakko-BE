@@ -1,5 +1,6 @@
 import Order from '../models/Order.js';
 import Shop from '../models/Shop.js';
+import Menu from '../models/Menu.js';
 import { getIo } from '../sockets/index.js';
 import { getISTDateRange } from '../utils/timezoneHelper.js';
 
@@ -22,13 +23,71 @@ export const createOrder = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Shop not found' });
     }
 
+    // Backend Validation for Customer Name
+    const trimmedName = (customerName || '').trim();
+    if (!trimmedName) {
+      return res.status(400).json({ success: false, message: 'Please enter your name.' });
+    }
+    if (trimmedName.length < 3) {
+      return res.status(400).json({ success: false, message: 'Name must be at least 3 characters.' });
+    }
+    if (trimmedName.length > 50) {
+      return res.status(400).json({ success: false, message: 'Name must be at most 50 characters.' });
+    }
+    const lettersAndSpaces = /^[a-zA-Z\s]+$/;
+    if (!lettersAndSpaces.test(trimmedName)) {
+      return res.status(400).json({ success: false, message: 'Name must contain only letters and spaces.' });
+    }
+
+    // Backend Validation for Customer Mobile
+    const cleanedMobile = (customerMobile || '').trim();
+    if (!cleanedMobile) {
+      return res.status(400).json({ success: false, message: 'Please enter your mobile number.' });
+    }
+    const digitsOnly = /^\d+$/;
+    if (!digitsOnly.test(cleanedMobile)) {
+      return res.status(400).json({ success: false, message: 'Only numbers are allowed.' });
+    }
+    if (cleanedMobile.length !== 10) {
+      return res.status(400).json({ success: false, message: 'Mobile number must contain exactly 10 digits.' });
+    }
+
+    // Validate stock for all items first
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ success: false, message: 'Items array must not be empty' });
+    }
+
+    const menuItemsToUpdate = [];
+    for (const item of items) {
+      const menuItem = await Menu.findById(item.menuId);
+      if (!menuItem) {
+        return res.status(404).json({ success: false, message: `Menu item '${item.name}' not found` });
+      }
+      if (menuItem.quantity < item.quantity) {
+        return res.status(400).json({
+          success: false,
+          message: `Only ${menuItem.quantity} items of ${menuItem.name} are available. Please reduce the quantity.`
+        });
+      }
+      menuItemsToUpdate.push({ menuItem, quantityToReduce: item.quantity });
+    }
+
+    // Reduce stock and save
+    for (const update of menuItemsToUpdate) {
+      update.menuItem.quantity -= update.quantityToReduce;
+      if (update.menuItem.quantity === 0) {
+        update.menuItem.status = 'Out Of Stock';
+      }
+      await update.menuItem.save();
+    }
+
     const orderNumber = await generateOrderNumber(shopId);
 
     const order = await Order.create({
       orderNumber,
       shopId,
-      customerName,
-      customerMobile,
+      customerName: trimmedName,
+      customerMobile: cleanedMobile,
       items,
       totalAmount,
     });
