@@ -149,7 +149,7 @@ export const getHistoryOrders = async (req, res) => {
     const { fromDate, toDate } = req.query;
     const query = {
       shopId: req.params.shopId,
-      status: 'Completed'
+      status: { $in: ['Completed', 'Cancelled'] }
     };
 
     if (fromDate || toDate) {
@@ -232,3 +232,101 @@ export const updateOrderStatus = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+// @desc    Verify order details for cancellation
+// @route   POST /api/orders/verify-cancellation
+// @access  Public (Customer)
+export const verifyOrderCancellation = async (req, res) => {
+  try {
+    const { orderNumber, customerMobile } = req.body;
+
+    const trimmedOrderNo = (orderNumber || '').trim();
+    const trimmedMobile = (customerMobile || '').trim();
+
+    if (!trimmedOrderNo || !trimmedMobile) {
+      return res.status(400).json({ success: false, message: 'Invalid Order Number or Mobile Number.' });
+    }
+
+    const order = await Order.findOne({
+      orderNumber: trimmedOrderNo,
+      customerMobile: trimmedMobile,
+    });
+
+    if (!order) {
+      return res.status(400).json({ success: false, message: 'Invalid Order Number or Mobile Number.' });
+    }
+
+    const timeDiff = Date.now() - new Date(order.createdAt).getTime();
+    const canCancel = timeDiff <= 5 * 60 * 1000;
+
+    const responseData = {
+      orderNumber: order.orderNumber,
+      customerMobile: order.customerMobile,
+      items: order.items.map(item => ({
+        name: item.name,
+        quantity: item.quantity,
+        price: item.price
+      })),
+      totalAmount: order.totalAmount,
+      canCancel,
+      createdAt: order.createdAt
+    };
+
+    res.json({
+      success: true,
+      message: 'Order verified successfully.',
+      data: responseData,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Cancel an order
+// @route   POST /api/orders/cancel
+// @access  Public (Customer)
+export const cancelOrder = async (req, res) => {
+  try {
+    const { orderNumber, customerMobile } = req.body;
+
+    const trimmedOrderNo = (orderNumber || '').trim();
+    const trimmedMobile = (customerMobile || '').trim();
+
+    if (!trimmedOrderNo || !trimmedMobile) {
+      return res.status(400).json({ success: false, message: 'Invalid Order Number or Mobile Number.' });
+    }
+
+    const order = await Order.findOne({
+      orderNumber: trimmedOrderNo,
+      customerMobile: trimmedMobile,
+    });
+
+    if (!order) {
+      return res.status(400).json({ success: false, message: 'Invalid Order Number or Mobile Number.' });
+    }
+
+    const timeDiff = Date.now() - new Date(order.createdAt).getTime();
+    if (timeDiff > 5 * 60 * 1000) {
+      return res.status(400).json({ success: false, message: 'This order can no longer be cancelled.' });
+    }
+
+    order.status = 'Cancelled';
+    const updatedOrder = await order.save();
+
+    // Emit socket event to notify both shop owner and customer
+    const io = getIo();
+    io.emit('order-status-updated', updatedOrder);
+
+    res.json({
+      success: true,
+      message: 'Your order has been cancelled successfully.',
+      data: {
+        orderNumber: updatedOrder.orderNumber,
+        status: updatedOrder.status,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+

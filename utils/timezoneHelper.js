@@ -6,18 +6,18 @@
 export const getISTDateRange = (dateInput) => {
   const date = dateInput ? new Date(dateInput) : new Date();
   
-  // Get time in UTC
-  const utcTime = date.getTime() + (date.getTimezoneOffset() * 60000);
-  // Add IST offset (+5.5 hours = 330 minutes)
-  const istDate = new Date(utcTime + (330 * 60000));
+  // Shift by 5.5 hours to align with IST
+  const shifted = new Date(date.getTime() + (5.5 * 60 * 60 * 1000));
   
-  const start = new Date(istDate);
-  start.setHours(0, 0, 0, 0);
-  const startUTC = new Date(start.getTime() - (330 * 60000));
+  const y = shifted.getUTCFullYear();
+  const m = shifted.getUTCMonth();
+  const d = shifted.getUTCDate();
   
-  const end = new Date(istDate);
-  end.setHours(23, 59, 59, 999);
-  const endUTC = new Date(end.getTime() - (330 * 60000));
+  // Set start (00:00:00.000 IST) and convert back to UTC
+  const startUTC = new Date(Date.UTC(y, m, d, 0, 0, 0, 0) - (5.5 * 60 * 60 * 1000));
+  
+  // Set end (23:59:59.999 IST) and convert back to UTC
+  const endUTC = new Date(Date.UTC(y, m, d, 23, 59, 59, 999) - (5.5 * 60 * 60 * 1000));
   
   return { start: startUTC, end: endUTC };
 };
