@@ -330,3 +330,41 @@ export const cancelOrder = async (req, res) => {
   }
 };
 
+// @desc    Get customer active orders by order number and mobile
+// @route   POST /api/orders/customer-orders
+// @access  Public (Customer)
+export const getCustomerOrders = async (req, res) => {
+  try {
+    const { orders } = req.body;
+
+    if (!orders || !Array.isArray(orders)) {
+      return res.status(400).json({ success: false, message: 'Invalid orders data' });
+    }
+
+    if (orders.length === 0) {
+      return res.json({ success: true, data: [] });
+    }
+
+    const fourHoursAgo = new Date(Date.now() - 4 * 60 * 60 * 1000);
+
+    const conditions = orders.map(o => ({
+      orderNumber: o.orderNumber,
+      customerMobile: o.mobile
+    }));
+
+    const activeOrders = await Order.find({
+      $or: conditions,
+      status: { $nin: ['Completed', 'Cancelled'] },
+      createdAt: { $gte: fourHoursAgo }
+    }).populate('shopId').sort({ createdAt: -1 });
+
+    res.json({
+      success: true,
+      message: 'Active customer orders fetched successfully',
+      data: activeOrders
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
