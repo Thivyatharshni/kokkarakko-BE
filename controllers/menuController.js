@@ -25,8 +25,10 @@ export const createMenuItem = async (req, res) => {
     let finalStatus = status || 'Available';
     if (qty === 0) {
       finalStatus = 'Out Of Stock';
-    } else if (qty > 0 && finalStatus === 'Out Of Stock') {
-      finalStatus = 'Available';
+    } else {
+      if (finalStatus === 'Out Of Stock' && status !== 'Out Of Stock') {
+        finalStatus = 'Available';
+      }
     }
 
     let imageUrl = '';
@@ -117,8 +119,10 @@ export const updateMenuItem = async (req, res) => {
       menuItem.quantity = qty;
       if (qty === 0) {
         menuItem.status = 'Out Of Stock';
-      } else if (qty > 0 && menuItem.status === 'Out Of Stock') {
-        menuItem.status = 'Available';
+      } else {
+        if (menuItem.status === 'Out Of Stock' && status !== 'Out Of Stock') {
+          menuItem.status = 'Available';
+        }
       }
     }
 

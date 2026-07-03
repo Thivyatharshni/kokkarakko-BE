@@ -34,7 +34,7 @@ const seedData = async () => {
 
     // 2. Create Shop
     const createdShop = await Shop.create({
-      shopName: 'Kokkarakko Fried Chicken',
+      shopName: 'Kokkarakko Crispy Chicken',
       slug: 'kokkarakko-fried-chicken',
       ownerId: createdUser._id,
       address: '123 Food Street',
