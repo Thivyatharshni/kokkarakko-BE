@@ -12,15 +12,7 @@ export const initSocket = (server) => {
   io = new Server(server, {
     cors: {
       origin: (origin, callback) => {
-        if (!origin) return callback(null, true);
-        const isAllowed = allowedOrigins.some(allowed => {
-          return origin === allowed || allowed.replace(/\/$/, '') === origin.replace(/\/$/, '');
-        });
-        if (isAllowed) {
-          callback(null, true);
-        } else {
-          callback(new Error('Not allowed by CORS'));
-        }
+        callback(null, true);
       },
       methods: ['GET', 'POST'],
       credentials: true,
