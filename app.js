@@ -19,16 +19,18 @@ const __dirname = path.dirname(__filename);
 const app = express();
 
 // Middleware CORS whitelist configuration
-const allowedOrigins = [];
-if (process.env.CLIENT_URL) {
-  allowedOrigins.push(process.env.CLIENT_URL);
-}
+const allowedOrigins = process.env.CLIENT_URL
+  ? process.env.CLIENT_URL
+      .split(",")
+      .map(origin => origin.trim().replace(/\/$/, ""))
+  : [];
+
 // Add local development and preview endpoints
 allowedOrigins.push(
-  'http://localhost:5173', 
-  'http://127.0.0.1:5173',
-  'http://localhost:4173',
-  'http://127.0.0.1:4173'
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+  "http://localhost:4173",
+  "http://127.0.0.1:4173"
 );
 
 app.use(
