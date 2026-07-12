@@ -26,7 +26,10 @@ const orderSchema = new mongoose.Schema(
     orderNumber: {
       type: String,
       required: true,
-      unique: true,
+    },
+    businessDate: {
+      type: String,
+      required: true,
     },
     shopId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -56,6 +59,9 @@ const orderSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+// Ensure token/orderNumber is unique per shop per business date
+orderSchema.index({ shopId: 1, businessDate: 1, orderNumber: 1 }, { unique: true });
 
 const Order = mongoose.model('Order', orderSchema);
 export default Order;

@@ -30,6 +30,9 @@ const shopSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    activeBusinessDate: {
+      type: String,
+    },
   },
   {
     timestamps: true,

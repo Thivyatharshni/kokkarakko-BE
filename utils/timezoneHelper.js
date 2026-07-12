@@ -21,3 +21,17 @@ export const getISTDateRange = (dateInput) => {
   
   return { start: startUTC, end: endUTC };
 };
+
+/**
+ * Get the calendar date string in Indian Standard Time (IST) (format YYYY-MM-DD).
+ * @param {string|Date} [dateInput] - Optional date input to convert. Defaults to current time.
+ * @returns {string}
+ */
+export const getISTDateString = (dateInput) => {
+  const date = dateInput ? new Date(dateInput) : new Date();
+  const shifted = new Date(date.getTime() + (5.5 * 60 * 60 * 1000));
+  const y = shifted.getUTCFullYear();
+  const m = String(shifted.getUTCMonth() + 1).padStart(2, '0');
+  const d = String(shifted.getUTCDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+};
