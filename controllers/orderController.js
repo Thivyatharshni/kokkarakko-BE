@@ -1,13 +1,20 @@
 import Order from '../models/Order.js';
 import Shop from '../models/Shop.js';
 import Menu from '../models/Menu.js';
+import Counter from '../models/Counter.js';
 import { getIo } from '../sockets/index.js';
-import { getISTDateRange } from '../utils/timezoneHelper.js';
+import { getISTDateRange, getISTDateString } from '../utils/timezoneHelper.js';
 
-// Generate Order Number Utility (e.g., KKR-1001)
-const generateOrderNumber = async (shopId) => {
-  const count = await Order.countDocuments({ shopId });
-  const paddedCount = String(count + 1).padStart(4, '0');
+// Generate Order Number Utility (e.g., KKR-0001, KKR-10000)
+const generateOrderNumber = async (shopId, businessDate) => {
+  const updatedCounter = await Counter.findOneAndUpdate(
+    { shopId, businessDate },
+    { $inc: { seq: 1 } },
+    { new: true, upsert: true }
+  );
+
+  const seq = updatedCounter.seq;
+  const paddedCount = seq < 10000 ? String(seq).padStart(4, '0') : String(seq);
   return `KKR-${paddedCount}`;
 };
 
@@ -81,10 +88,19 @@ export const createOrder = async (req, res) => {
       await update.menuItem.save();
     }
 
-    const orderNumber = await generateOrderNumber(shopId);
+    const todayStr = getISTDateString();
+    let businessDate = shop.activeBusinessDate;
+    if (!businessDate || businessDate !== todayStr) {
+      shop.activeBusinessDate = todayStr;
+      await shop.save();
+      businessDate = todayStr;
+    }
+
+    const orderNumber = await generateOrderNumber(shopId, businessDate);
 
     const order = await Order.create({
       orderNumber,
+      businessDate,
       shopId,
       customerName: trimmedName,
       customerMobile: cleanedMobile,
@@ -250,7 +266,7 @@ export const verifyOrderCancellation = async (req, res) => {
     const order = await Order.findOne({
       orderNumber: trimmedOrderNo,
       customerMobile: trimmedMobile,
-    });
+    }).sort({ createdAt: -1 });
 
     if (!order) {
       return res.status(400).json({ success: false, message: 'Invalid Order Number or Mobile Number.' });
@@ -299,7 +315,7 @@ export const cancelOrder = async (req, res) => {
     const order = await Order.findOne({
       orderNumber: trimmedOrderNo,
       customerMobile: trimmedMobile,
-    });
+    }).sort({ createdAt: -1 });
 
     if (!order) {
       return res.status(400).json({ success: false, message: 'Invalid Order Number or Mobile Number.' });

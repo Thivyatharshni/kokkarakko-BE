@@ -2,6 +2,7 @@ import './config/env.js';
 import http from 'http';
 import app from './app.js';
 import connectDB from './config/db.js';
+import { runMigrations } from './config/migration.js';
 import { initSocket } from './sockets/index.js';
 
 const PORT = process.env.PORT;
@@ -10,6 +11,9 @@ const PORT = process.env.PORT;
 const startServer = async () => {
   // 2. Connect MongoDB
   await connectDB();
+
+  // Run migrations
+  await runMigrations();
 
   // 3. Initialize Express App is already done in app.js
   

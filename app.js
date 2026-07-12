@@ -23,8 +23,13 @@ const allowedOrigins = [];
 if (process.env.CLIENT_URL) {
   allowedOrigins.push(process.env.CLIENT_URL);
 }
-// Add local development endpoints
-allowedOrigins.push('http://localhost:5173', 'http://127.0.0.1:5173');
+// Add local development and preview endpoints
+allowedOrigins.push(
+  'http://localhost:5173', 
+  'http://127.0.0.1:5173',
+  'http://localhost:4173',
+  'http://127.0.0.1:4173'
+);
 
 app.use(
   cors({

@@ -81,7 +81,15 @@ export const getMenuByShopId = async (req, res) => {
       data: menuItems,
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error("=== API ERROR ===");
+    console.error(req.originalUrl);
+    console.error(error);
+    console.error(error.stack);
+    res.status(500).json({
+        success: false,
+        message: error.message,
+        stack: process.env.NODE_ENV === "development" ? error.stack : undefined
+    });
   }
 };
 
@@ -203,6 +211,14 @@ export const getFeaturedMenuByShopSlug = async (req, res) => {
       data: featuredItems,
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error("=== API ERROR ===");
+    console.error(req.originalUrl);
+    console.error(error);
+    console.error(error.stack);
+    res.status(500).json({
+        success: false,
+        message: error.message,
+        stack: process.env.NODE_ENV === "development" ? error.stack : undefined
+    });
   }
 };
